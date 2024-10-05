@@ -1,0 +1,60 @@
+% here I calculate the GMI bound of
+% mismatch decoder.
+% this boundry represent the lower
+% bound of capacity that can be
+% reached with MisMatched Decoder.
+
+
+% I need to fix the equation of the
+% boundry in the function:
+% 'calc_GMI_rate'
+%%
+
+% Define channel matrix W
+W = [0.75 0.25 0;
+     0 0.75 0.25;
+     0.25 0 0.75];
+
+% Set range of Qx(0) and Qx(1), Qx(2) = 1 - Qx(0) - Qx(1)
+Q0_values = 0:0.01:0.6;
+Q1_values = 0:0.01:0.6;
+
+% Initialize matrix to store GMI rates
+GMI_rate = nan(length(Q0_values), length(Q1_values));
+
+% Calculate rates for each pair of Qx(0) and Qx(1)
+for i = 1:length(Q0_values)
+    for j = 1:length(Q1_values)
+        Qx0 = Q0_values(i);
+        Qx1 = Q1_values(j);
+        
+        if Qx0 + Qx1 <= 1 % Ensure valid distribution
+            Qx = [Qx0, Qx1, 1 - Qx0 - Qx1];
+            GMI_rate(i,j) = calc_GMI_rate(Qx, W);
+        end
+    end
+end
+
+% Plot GMI rate
+figure;
+surf(Q0_values, Q1_values, GMI_rate');
+xlabel('Q_X(0)');
+ylabel('Q_X(1)');
+zlabel('Rate (bits/use)');
+title('GMI');
+axis([0 0.6 0 0.6 0 0.6]);
+view([-45 30]);
+
+% Define corrected function to calculate GMI rate
+function rate = calc_GMI_rate(Qx, W)
+    rate = 0;
+    Py = Qx * W;  % Calculate P(y) for all y
+    
+    for x = 1:3
+        for y = 1:3
+            if W(x, y) > 0 && Qx(x) > 0
+                rate = rate + Qx(x) * W(x, y) * log2(W(x, y) / Py(y));
+            end
+        end
+    end
+end
